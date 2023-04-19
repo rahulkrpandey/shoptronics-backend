@@ -1,4 +1,5 @@
 const router = require('express').Router(); const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const Customer = require('../models/customer');
 
@@ -114,12 +115,22 @@ router.post('/login', async (req, res) => {
 
         const result = await passwordChecker(customer.password);
 
-        if (result === true) {
-            res.status(200).send("Logged in successfully");
-            return;
-        } else {
-            res.status(400).send("Wrong password");
+        if (result === false) {
+            return res.status(400).send("Wrong password");
         }
+
+        jwt.sign({
+            email: customer.email,
+        }, process.env.JWT_KEY, { expiresIn: '1h' }, (err, token) => {
+            if (err) {
+                return res.status(500).send("Internal server error, password could not generated");
+            }
+
+            const copiedCustomer = JSON.parse(JSON.stringify(customer));
+            delete copiedCustomer.password;
+            delete copiedCustomer.__v;
+            return res.status(200).set('Authorization', `Bearer ${token}`).json(copiedCustomer);
+        });
     } catch (err) {
         res.status(500).send("Internal server error");
     }
