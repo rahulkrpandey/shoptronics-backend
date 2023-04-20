@@ -19,9 +19,9 @@ mongoose.connect(process.env.MONGODB_CONNECT).then(() => {
 }).catch(error => console.log(error));
 
 const authRouter = require('./routes/auth');
-// const customerRouter = require('./routes/customer');
+const customerRouter = require('./routes/customer');
 
-// app.use('/api/customer', customerRouter);
+app.use('/api/customer', customerRouter);
 app.use('/api/authentication', authRouter);
 
 app.get('/', (req, res) => {

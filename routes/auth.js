@@ -121,6 +121,7 @@ router.post('/login', async (req, res) => {
 
         jwt.sign({
             email: customer.email,
+            id: customer._id
         }, process.env.JWT_KEY, { expiresIn: '1h' }, (err, token) => {
             if (err) {
                 return res.status(500).send("Internal server error, password could not generated");
