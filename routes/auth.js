@@ -36,7 +36,6 @@ router.post('/signup', async (req, res) => {
         return;
     }
 
-    console.log("I am here");
     const salt = 10;
     bcrypt.hash(req.body.password, salt, async (err, hashedPassword) => {
         if (err) {
