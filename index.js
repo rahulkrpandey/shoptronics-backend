@@ -21,10 +21,12 @@ mongoose.connect(process.env.MONGODB_CONNECT).then(() => {
 const authRouter = require('./routes/auth');
 const customerRouter = require('./routes/customer');
 const categoryRouter = require('./routes/category');
+const productRouter = require('./routes/product');
 
 app.use('/api/authentication', authRouter);
 app.use('/api/customer', customerRouter);
 app.use('/api/category', categoryRouter);
+app.use('/api/product', productRouter);
 
 app.get('/', (req, res) => {
     res.send('hello world');

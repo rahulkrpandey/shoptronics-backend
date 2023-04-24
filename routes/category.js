@@ -41,9 +41,6 @@ const authorizationUtil = async (req) => {
 
     try {
         const data = await jwt.verify(token, process.env.JWT_KEY);
-        if (!data.id) {
-            throw new Error("user id is not specified");
-        }
 
         const admin = await findUser(data.id);
         if (admin.isAdmin === false) {
