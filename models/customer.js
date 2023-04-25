@@ -8,11 +8,10 @@ const customerSchema = new Schema({
     address: { type: String, required: true },
     isAdmin: { type: Boolean, required: true },
     likes: [String],
-    orders: [String],
+    orders: [{ id: String, quantity: Number }],
     contact: { type: Number, required: true },
     date: { type: Date, default: Date.now },
 });
-
 
 Customer = mongoose.model('Customer', customerSchema);
 
