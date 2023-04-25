@@ -29,6 +29,18 @@ const findUser = async (id) => {
     }
 };
 
+const findOrder = async (id) => {
+    try {
+        const order = await Order.findOne({
+            _id: id
+        });
+
+        return order;
+    } catch (err) {
+        throw err;
+    }
+};
+
 router.post('/', async (req, res) => {
     try {
         const data = await authorizeTokenUtil(req);
@@ -41,14 +53,70 @@ router.post('/', async (req, res) => {
             productIds: [...body.productIds],
         });
 
-        // customer.order = [...customer.order, ...body.order];
+        customer.orders = [...customer.orders, ...body.productIds];
 
-        await order.save();
-        // await customer.save();
+        await Promise.all([order.save(), customer.save()]);
         res.status(201).json(order);
     } catch (err) {
         res.status(400).send(err.message);
     }
 });
+
+router.get('/', async (req, res) => {
+    try {
+        const data = await authorizeTokenUtil(req);
+        const admin = await findUser(data.id);
+        if (!admin || !admin.isAdmin) {
+            throw new Error("You are not authorized");
+        }
+
+        const order = await findOrder(req.body.orderId);
+
+        if (order === null) {
+            throw new Error("Order not found");
+        }
+
+        res.status(200).json(order);
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+router.patch('/', async (req, res) => {
+    try {
+        const data = await authorizeTokenUtil(req);
+        const admin = await findUser(data.id);
+        if (!admin || !admin.isAdmin) {
+            throw new Error("You are not authorized");
+        }
+
+        const body = req.body;
+        await Order.updateOne({ _id: body._id }, body);
+        res.status(201).json(await findOrder(body._id));
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+});
+
+router.delete('/', async (req, res) => {
+    try {
+        const data = await authorizeTokenUtil(req);
+        const admin = await findUser(data.id);
+        if (!admin || !admin.isAdmin) {
+            throw new Error("You are not authorized");
+        }
+
+        const order = await findOrder(req.body.orderId);
+        if (order === null) {
+            throw new Error("Order not found");
+        }
+
+        await Order.deleteOne({ _id: req.body.orderId });
+
+        res.status(201).json(order);
+    } catch (err) {
+        res.status(400).send(err.message);
+    }
+})
 
 module.exports = router;
