@@ -31,7 +31,7 @@ app.use('/api/product', productRouter);
 app.use('/api/order', orderRouter);
 
 app.get('/', (req, res) => {
-    res.send('hello world');
+    res.status(200).send('Shoptronics api');
 });
 
 app.listen(process.env.PORT, () => {
