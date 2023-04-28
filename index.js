@@ -5,15 +5,6 @@ const mongoose = require('mongoose');
 
 app.use(express.json());
 
-// app.use((err, req, res, next) => {
-//     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-//         console.error('Invalid JSON:', err.message);
-//         res.status(400).send('Invalid JSON');
-//     } else {
-//         next();
-//     }
-// });
-
 mongoose.connect(process.env.MONGODB_CONNECT).then(() => {
     console.log("db connected");
 }).catch(error => console.log(error));
