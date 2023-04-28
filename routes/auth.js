@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const Customer = require('../models/customer');
 
-const { verifyCustomer } = require('../middlewares/auth');
+const { verifyCustomerLogin } = require('../middlewares/auth');
 
 router.post('/signup', async (req, res) => {
     try {
@@ -34,12 +34,13 @@ router.post('/signup', async (req, res) => {
 });
 
 // Login route 
-router.post('/login', verifyCustomer, async (req, res) => {
+router.post('/login', verifyCustomerLogin, async (req, res) => {
     const customer = req.body.customer;
     try {
         jwt.sign({
             email: customer.email,
-            id: customer._id
+            id: customer._id,
+            isAdmin: customer.isAdmin
         }, process.env.JWT_KEY, { expiresIn: '1h' }, (err, token) => {
             if (err) {
                 console.log(err);
