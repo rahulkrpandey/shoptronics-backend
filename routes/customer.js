@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const Customer = require('../models/customer');
 const bcrypt = require('bcrypt');
 
+const { verifyAdmin, verifyCustomer, verifyToken } = require('../middlewares/auth');
+const { findCustomerWithId } = require('../utils/utils');
+
 const authorizeTokenUtil = async (req) => {
     const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
     if (token === null) {
@@ -29,28 +32,21 @@ const FindUser = async (id) => {
     }
 }
 
-router.patch('/update', async (req, res) => {
-    const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
-    if (token === null) {
-        return res.status(400).send("You are not authorized, token not found");
-    }
-
+router.patch('/update', verifyToken, async (req, res) => {
     try {
-        const data = await authorizeTokenUtil(req);
-        const customer = await FindUser(data.id);
-        if (customer === null || customer.email !== data.email) {
-            return res.status(400).send("You are not authorized, invalid user");
-        }
+        const customer = await findCustomerWithId(req.headers.userId);
 
         const body = req.body;
-        if (body.password) {
-            return res.status(400).send("Password can not be updated");
+        if (body.data.password) {
+            const err = new Error("Password can not be updated");
+            err.status = 400;
+            throw err;
         }
 
-        await Customer.updateOne({ _id: data.id }, { ...body });
-        return res.status(201).json(await Customer.findOne({ _id: data.id }));
+        await Customer.updateOne({ _id: customer._id }, { ...body.data });
+        return res.status(201).json(await findCustomerWithId(customer.id));
     } catch (err) {
-        res.status(500).send("Internal server error, could not update user, check given fields");
+        res.status(err.status || 500).send(err.message);
     }
 });
 
@@ -90,7 +86,7 @@ router.delete('/', async (req, res) => {
 
         await Customer.deleteOne({ _id: req.body.customerId });
         res.status(200).send("User is deleted");
-    } catch(err) {
+    } catch (err) {
         return res.status(400).send(err.message);
     }
 });
