@@ -1,18 +1,20 @@
 const bcrypt = require('bcrypt');
 const { findCustomerWithEmail } = require('../utils/utils');
+const jwt = require('jsonwebtoken');
 
 const verifyToken = async (req, res, next) => {
     try {
-        const token = req.body.authorization ? req.body.authorization.split(' ')[1] : null;
+        const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
         const data = jwt.verify(token, process.env.JWT_KEY);
-        req.header.userId = data.id;
+        req.headers.userId = data.id;
+        req.headers.isAdmin = data.isAdmin;
         next();
     } catch (err) {
         res.status(err).send(err.message);
     }
 };
 
-const verifyCustomer = async (req, res, next) => {
+const verifyCustomerLogin = async (req, res, next) => {
     try {
         if (!req.body.email || !req.body.password) {
             const err = new Error("Email or password is missing");
@@ -40,11 +42,26 @@ const verifyCustomer = async (req, res, next) => {
         req.body.customer = customer;
         next();
     } catch (err) {
-        return res.status(err.status).send(err.message);
+        return res.status(err.status || 400).send(err.message);
+    }
+}
+
+const verifyAdmin = async (req, res, next) => {
+    try {
+        if (!req.header.isAdmin) {
+            const err = new Error("You are not authorized");
+            err.status = 400;
+            throw err;
+        }
+
+        next();
+    } catch (err) {
+        return res.status(err.status || 400).send(err.message);
     }
 }
 
 module.exports = {
-    verifyCustomer,
+    verifyCustomerLogin,
+    verifyAdmin,
     verifyToken
 }
