@@ -1,5 +1,8 @@
 const Customer = require('../models/customer');
+const mongoose = require('mongoose');
+const Category = require('../models/category');
 
+// related to user
 const findCustomerWithId = async (id) => {
     try {
         const customer = await Customer.findOne({
@@ -36,7 +39,29 @@ const findCustomerWithEmail = async (email) => {
     }
 }
 
+// related to category
+const findCategory = async (_id) => {
+    try {
+        // const id = new mongoose.Types.ObjectId(_id);
+        const id = _id;
+        const category = await Category.findOne({
+            _id: id
+        });
+
+        if (category === null) {
+            const err = new Error("Given category is not found");
+            err.status = 400;
+            throw err;
+        }
+
+        return category;
+    } catch (err) {
+        throw err;
+    }
+};
+
 module.exports = {
     findCustomerWithEmail,
-    findCustomerWithId
+    findCustomerWithId,
+    findCategory
 }
