@@ -10,7 +10,7 @@ const verifyToken = async (req, res, next) => {
         req.headers.isAdmin = data.isAdmin;
         next();
     } catch (err) {
-        res.status(err).send(err.message);
+        res.status(err.status || 500).send(err.message);
     }
 };
 
@@ -48,7 +48,7 @@ const verifyCustomerLogin = async (req, res, next) => {
 
 const verifyAdmin = async (req, res, next) => {
     try {
-        if (!req.header.isAdmin) {
+        if (!req.headers.isAdmin) {
             const err = new Error("You are not authorized");
             err.status = 400;
             throw err;
