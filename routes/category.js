@@ -2,58 +2,9 @@ const router = require("express").Router();
 const jwt = require('jsonwebtoken');
 const Category = require('../models/category');
 const Customer = require('../models/customer');
-const mongoose = require('mongoose');
 
 const { verifyAdmin, verifyToken } = require('../middlewares/auth');
-
-const findUser = async (id) => {
-    try {
-        const admin = await Customer.findOne({
-            _id: id
-        });
-
-        return admin;
-    } catch (err) {
-        throw err;
-    }
-};
-
-const findCategory = async (_id) => {
-    try {
-        const id = new mongoose.Types.ObjectId(_id);
-        const category = await Category.findOne({
-            _id: id
-        });
-
-        if (category === null) {
-            throw new Error("Given category is not found");
-        }
-
-        return category;
-    } catch (err) {
-        throw err;
-    }
-};
-
-const authorizationUtil = async (req) => {
-    const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
-    if (token == null) {
-        throw new Error("You are not authorized, token not found");
-    }
-
-    try {
-        const data = await jwt.verify(token, process.env.JWT_KEY);
-
-        const admin = await findUser(data.id);
-        if (admin.isAdmin === false) {
-            throw new Error("You are not authorized");
-        }
-
-        return data;
-    } catch (err) {
-        throw err;
-    }
-};
+const { findCategory } = require('../utils/utils');
 
 router.post('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
@@ -76,58 +27,58 @@ router.post('/', verifyToken, verifyAdmin, async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
-        await authorizationUtil(req);
-
-        const body = req.body;
-        if (!body.categoryId) {
-            throw new Error("category's id is not specified");
+        const data = req.body.data;
+        if (!data || !data.categoryId) {
+            const err = new Error("category's id is not specified");
+            err.status = 400;
+            throw err;
         }
 
-        const category = await findCategory(body.categoryId);
+        const category = await findCategory(data.categoryId);
         res.status(200).json(category);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
-router.patch('/', async (req, res) => {
+router.patch('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        await authorizationUtil(req);
-
-        const body = req.body;
-        if (!body.categoryId || !body.name) {
-            throw new Error("category's id is not specified");
+        const data = req.body.data;
+        if (!data || !data.categoryId || !data.name) {
+            const err = new Error("category's id or name is not specified");
+            err.status = 400;
+            throw err;
         }
 
-        const category = await findCategory(body.categoryId);
-        category.name = body.name;
+        const category = await findCategory(data.categoryId);
+        category.name = data.name;
         await category.save();
         res.status(200).json(category);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        await authorizationUtil(req);
-
-        const body = req.body;
-        if (!body.categoryId) {
-            throw new Error("category's id is not specified");
+        const data = req.body.data;
+        if (!data || !data.categoryId) {
+            const err = new Error("category's id is not specified");
+            err.status = 400;
+            throw err;
         }
 
-        const category = await findCategory(body.categoryId);
+        const category = await findCategory(data.categoryId);
 
         await Category.deleteOne({
-            _id: body.categoryId
+            _id: data.categoryId
         });
 
         res.status(200).json(category);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 })
 
