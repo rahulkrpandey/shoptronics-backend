@@ -4,6 +4,8 @@ const Category = require('../models/category');
 const Customer = require('../models/customer');
 const mongoose = require('mongoose');
 
+const { verifyAdmin, verifyToken } = require('../middlewares/auth');
+
 const findUser = async (id) => {
     try {
         const admin = await Customer.findOne({
@@ -53,24 +55,24 @@ const authorizationUtil = async (req) => {
     }
 };
 
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        await authorizationUtil(req);
-
-        const body = req.body;
-        if (!body.category) {
-            throw new Error("Category is not specified");
+        const data = req.body.data;
+        if (!data || !data.category) {
+            const err = new Error("Category is not specified");
+            err.status = 400;
+            throw err;
         }
 
         const category = new Category({
-            name: body.category
+            name: data.category
         });
 
         await category.save();
 
         res.status(201).json(category);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
