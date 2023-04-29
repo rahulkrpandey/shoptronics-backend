@@ -7,7 +7,9 @@ const findCustomerWithId = async (id) => {
         });
 
         if (customer === null) {
-            throw new Error("Customer not found");
+            const err = Error("Customer not found");
+            err.status = 400;
+            throw err;
         }
 
         return customer;
@@ -23,7 +25,9 @@ const findCustomerWithEmail = async (email) => {
         });
 
         if (customer === null) {
-            throw new Error("Customer not found");
+            const err = Error("Customer not found");
+            err.status = 400;
+            throw err;
         }
 
         return customer;
