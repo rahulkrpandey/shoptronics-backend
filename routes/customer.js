@@ -3,34 +3,20 @@ const jwt = require('jsonwebtoken');
 const Customer = require('../models/customer');
 const bcrypt = require('bcrypt');
 
-const { verifyAdmin, verifyCustomer, verifyToken } = require('../middlewares/auth');
+const { verifyAdmin, verifyToken } = require('../middlewares/auth');
 const { findCustomerWithId } = require('../utils/utils');
 
-const authorizeTokenUtil = async (req) => {
-    const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
-    if (token === null) {
-        throw new Error("You are not authorized, token not found");
-    }
-
+router.get('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        const data = await jwt.verify(token, process.env.JWT_KEY);
-        return data;
-    } catch (err) {
-        throw err;
-    }
-}
+        const userId = req.query.userId;
 
-const FindUser = async (id) => {
-    try {
-        const customer = await Customer.findOne({
-            _id: id
-        })
-
-        return customer;
+        const user = JSON.parse(JSON.stringify(await findCustomerWithId(userId)));
+        delete user.password;
+        res.status(200).json(user);
     } catch (err) {
-        throw err;
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
-}
+})
 
 router.patch('/update', verifyToken, async (req, res) => {
     try {
@@ -50,21 +36,21 @@ router.patch('/update', verifyToken, async (req, res) => {
     }
 });
 
-router.patch('/password', async (req, res) => {
+router.patch('/password', verifyToken, async (req, res) => {
     try {
-        if (req.body.newPassword === undefined || req.body.oldPassword === undefined) {
+        const data = req.body.data;
+        if (!data || !data.newPassword || !data.oldPassword) {
             throw new Error("New password or old password not found");
         }
 
-        const data = await authorizeTokenUtil(req);
-        const customer = await FindUser(data.id);
-        const compare = await bcrypt.compare(req.body.oldPassword, customer.password);
+        const customer = await findCustomerWithId(req.headers.userId);
+        const compare = await bcrypt.compare(data.oldPassword, customer.password);
         if (compare === false) {
             throw new Error("Wrong password");
         }
 
         const salt = 10;
-        customer.password = await bcrypt.hash(req.body.newPassword, salt);
+        customer.password = await bcrypt.hash(data.newPassword, salt);
         await customer.save();
         return res.status(200).send("Password is updated");
     } catch (err) {
@@ -72,19 +58,14 @@ router.patch('/password', async (req, res) => {
     }
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        const data = await authorizeTokenUtil(req);
-        const customer = await FindUser(data.id);
-        if (customer.isAdmin === false) {
-            throw new Error("You are not authorized");
-        }
-
-        if (req.body.customerId === undefined) {
+        const data = req.body.data;
+        if (!data || !data.customerId) {
             throw new Error("User not found");
         }
 
-        await Customer.deleteOne({ _id: req.body.customerId });
+        await Customer.deleteOne({ _id: data.customerId });
         res.status(200).send("User is deleted");
     } catch (err) {
         return res.status(400).send(err.message);
