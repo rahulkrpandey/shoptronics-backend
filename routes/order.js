@@ -1,117 +1,53 @@
 const router = require('express').Router();
 const Order = require('../models/order');
 const Customer = require('../models/customer');
-const jwt = require('jsonwebtoken');
 
-const authorizeTokenUtil = async (req) => {
-    const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
-    if (token === null) {
-        throw new Error("You are not authorized, token not found");
-    }
+const { verifyAdmin, verifyToken } = require('../middlewares/auth');
+const { findCustomerWithId, findOrder } = require('../utils/utils');
 
+router.post('/', verifyToken, async (req, res) => {
     try {
-        const data = await jwt.verify(token, process.env.JWT_KEY);
-        return data;
-    } catch (err) {
-        throw err;
-    }
-};
+        const customer = await findCustomerWithId(req.headers.userId);
 
-const findUser = async (id) => {
-    try {
-        const user = await Customer.findOne({
-            _id: id
-        })
-
-        return user;
-    } catch (err) {
-        throw err;
-    }
-};
-
-const findOrder = async (id) => {
-    try {
-        const order = await Order.findOne({
-            _id: id
-        });
-
-        return order;
-    } catch (err) {
-        throw err;
-    }
-};
-
-router.post('/', async (req, res) => {
-    try {
-        const data = await authorizeTokenUtil(req);
-        const customer = await findUser(data.id);
-
-        const body = req.body;
+        const _order = req.body.order;
+        if (customer._id.toString() !== _order.customerId) {
+            const err = new Error("Customer id does not match");
+            err.status = 400;
+            throw err;
+        }
 
         const order = new Order({
-            customerId: body.customerId,
-            productIds: [...body.productIds],
+            customerId: customer._id,
+            productIds: [..._order.productIds],
         });
 
-        customer.orders = [...customer.orders, ...body.productIds];
+        customer.orders = [...customer.orders, ..._order.productIds];
 
         await Promise.all([order.save(), customer.save()]);
         res.status(201).json(order);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
-        const data = await authorizeTokenUtil(req);
-        const admin = await findUser(data.id);
-        if (!admin || !admin.isAdmin) {
-            throw new Error("You are not authorized");
-        }
-
-        const order = await findOrder(req.body.orderId);
-
-        if (order === null) {
-            throw new Error("Order not found");
-        }
+        const _order = req.body.order;
+        const order = await findOrder(_order.id);
 
         res.status(200).json(order);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
-router.patch('/', async (req, res) => {
+router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
     try {
-        const data = await authorizeTokenUtil(req);
-        const admin = await findUser(data.id);
-        if (!admin || !admin.isAdmin) {
-            throw new Error("You are not authorized");
-        }
+        const _order = req.body.order;
+        console.log(_order);
+        const order = await findOrder(_order.id);
 
-        const body = req.body;
-        await Order.updateOne({ _id: body._id }, body);
-        res.status(201).json(await findOrder(body._id));
-    } catch (err) {
-        res.status(400).send(err.message);
-    }
-});
-
-router.delete('/', async (req, res) => {
-    try {
-        const data = await authorizeTokenUtil(req);
-        const admin = await findUser(data.id);
-        if (!admin || !admin.isAdmin) {
-            throw new Error("You are not authorized");
-        }
-
-        const order = await findOrder(req.body.orderId);
-        if (order === null) {
-            throw new Error("Order not found");
-        }
-
-        await Order.deleteOne({ _id: req.body.orderId });
+        await Order.deleteOne({ _id: _order.id });
 
         res.status(201).json(order);
     } catch (err) {
