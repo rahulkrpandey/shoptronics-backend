@@ -2,6 +2,7 @@ const Customer = require('../models/customer');
 const mongoose = require('mongoose');
 const Category = require('../models/category');
 const Order = require('../models/order');
+const Product = require('../models/product');
 
 // related to user
 const findCustomerWithId = async (id) => {
@@ -80,9 +81,45 @@ const findOrder = async (id) => {
     }
 };
 
+// related to product
+const findProduct = async (id) => {
+    try {
+        const product = await Product.findOne({
+            _id: id
+        })
+
+        if (product === null) {
+            const err = new Error("Given product is not found");
+            err.status = 400;
+            throw err;
+        }
+
+        return product;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const findProductsByCategory = async (category, count) => {
+    try {
+        const products = await Product.find({
+            categories: {
+                $in: [category]
+            }
+        }).limit(count);
+
+        return products;
+    } catch (err) {
+        throw err;
+    }
+};
+
+
 module.exports = {
     findCustomerWithEmail,
     findCustomerWithId,
     findCategory,
-    findOrder
+    findOrder,
+    findProduct,
+    findProductsByCategory
 }
