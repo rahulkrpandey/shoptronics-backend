@@ -51,7 +51,7 @@ router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
 
         res.status(201).json(order);
     } catch (err) {
-        res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 })
 
