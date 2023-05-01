@@ -44,14 +44,23 @@ router.get('/', verifyToken, async (req, res) => {
 router.patch('/likes', verifyToken, async (req, res) => {
     try {
         const user = await findCustomerWithId(req.headers.userId);
-
         const productId = req.query.id;
         const product = await findProduct(productId);
 
-        user.likes.push(productId);
-
-        product.likes++;
-        await Promise.all([product.save(), user.save()]);
+        const liked = req.query.liked;
+        if (liked.toLowerCase() === 'true') {
+            if (user.likes.includes(productId) === false) {
+                user.likes.push(productId);
+                product.likes++;
+                await Promise.all([product.save(), user.save()]);
+            }
+        } else if (liked.toLowerCase() === 'false') {
+            if (user.likes.includes(productId) === true) {
+                user.likes = user.likes.filter((id) => id != productId);
+                product.likes--;
+                await Promise.all([product.save(), user.save()]);
+            }
+        }
 
         res.status(200).json(product);
     } catch (err) {
