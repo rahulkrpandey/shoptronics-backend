@@ -12,7 +12,7 @@ router.post('/', verifyToken, async (req, res) => {
         const _order = req.body.order;
         if (customer._id.toString() !== _order.customerId) {
             const err = new Error("Customer id does not match");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
@@ -49,7 +49,7 @@ router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
 
         await Order.deleteOne({ _id: _order.id });
 
-        res.status(201).json(order);
+        res.status(200).json(order);
     } catch (err) {
         res.status(err.status || 500).send(err.message || "Internal server error");
     }

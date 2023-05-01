@@ -53,7 +53,7 @@ router.patch('/likes', verifyToken, async (req, res) => {
         product.likes++;
         await Promise.all([product.save(), user.save()]);
 
-        res.status(201).json(product);
+        res.status(200).json(product);
     } catch (err) {
         res.status(err.status || 500).send(err.message || "Internal server error");
     }
@@ -69,7 +69,7 @@ router.patch('/', verifyToken, verifyAdmin, async (req, res) => {
             _id: productId
         }, { ..._product });
 
-        res.status(201).json(await findProduct(product._id));
+        res.status(200).json(await findProduct(product._id));
     } catch (err) {
         res.status(err.status || 500).send(err.message || "Internal server error");
     }
@@ -83,7 +83,7 @@ router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
             _id: req.query.id,
         });
 
-        res.status(201).json(product);
+        res.status(200).json(product);
     } catch (err) {
         res.status(err.status || 500).send(err.message || "Internal server error");
     }

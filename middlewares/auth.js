@@ -25,14 +25,14 @@ const verifyCustomerLogin = async (req, res, next) => {
         const user = await findCustomerWithEmail(req.body.email);
         if (user === null) {
             const err = new Error("User not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
         const comparePass = await bcrypt.compare(req.body.password, user.password);
         if (comparePass === false) {
             const err = new Error("Authentication failed");
-            err.status = 400;
+            err.status = 401;
             throw err;
         }
 
@@ -42,7 +42,7 @@ const verifyCustomerLogin = async (req, res, next) => {
         req.body.customer = customer;
         next();
     } catch (err) {
-        return res.status(err.status || 400).send(err.message);
+        return res.status(err.status || 500).send(err.message || "Internal server error");
     }
 }
 
@@ -50,13 +50,13 @@ const verifyAdmin = async (req, res, next) => {
     try {
         if (!req.headers.isAdmin) {
             const err = new Error("You are not authorized");
-            err.status = 400;
+            err.status = 401;
             throw err;
         }
 
         next();
     } catch (err) {
-        return res.status(err.status || 400).send(err.message);
+        return res.status(err.status || 500).send(err.message || "Internal server error");
     }
 }
 

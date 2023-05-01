@@ -1,5 +1,4 @@
 const Customer = require('../models/customer');
-const mongoose = require('mongoose');
 const Category = require('../models/category');
 const Order = require('../models/order');
 const Product = require('../models/product');
@@ -13,7 +12,7 @@ const findCustomerWithId = async (id) => {
 
         if (customer === null) {
             const err = Error("Customer not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
@@ -31,7 +30,7 @@ const findCustomerWithEmail = async (email) => {
 
         if (customer === null) {
             const err = Error("Customer not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
@@ -52,7 +51,7 @@ const findCategory = async (_id) => {
 
         if (category === null) {
             const err = new Error("Given category is not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
@@ -71,7 +70,7 @@ const findOrder = async (id) => {
 
         if (order === null) {
             const err = new Error("Given order is not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 
@@ -90,7 +89,7 @@ const findProduct = async (id) => {
 
         if (product === null) {
             const err = new Error("Given product is not found");
-            err.status = 400;
+            err.status = 404;
             throw err;
         }
 

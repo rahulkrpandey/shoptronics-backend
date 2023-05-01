@@ -31,7 +31,7 @@ router.get('/', verifyToken, async (req, res) => {
     try {
         const data = req.body.data;
         if (!data || !data.categoryId) {
-            const err = new Error("category's id is not specified");
+            const err = new Error("Category's id is not specified");
             err.status = 400;
             throw err;
         }

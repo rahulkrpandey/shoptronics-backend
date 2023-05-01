@@ -25,14 +25,14 @@ router.patch('/update', verifyToken, async (req, res) => {
         const body = req.body;
         if (body.data.password) {
             const err = new Error("Password can not be updated");
-            err.status = 400;
+            err.status = 403;
             throw err;
         }
 
         await Customer.updateOne({ _id: customer._id }, { ...body.data });
-        return res.status(201).json(await findCustomerWithId(customer.id));
+        return res.status(200).json(await findCustomerWithId(customer.id));
     } catch (err) {
-        res.status(err.status || 500).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
@@ -54,7 +54,7 @@ router.patch('/password', verifyToken, async (req, res) => {
         await customer.save();
         return res.status(200).send("Password is updated");
     } catch (err) {
-        return res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 
@@ -68,7 +68,7 @@ router.delete('/', verifyToken, verifyAdmin, async (req, res) => {
         await Customer.deleteOne({ _id: data.customerId });
         res.status(200).send("User is deleted");
     } catch (err) {
-        return res.status(400).send(err.message);
+        res.status(err.status || 500).send(err.message || "Internal server error");
     }
 });
 

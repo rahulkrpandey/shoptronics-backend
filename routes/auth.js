@@ -1,4 +1,5 @@
-const router = require('express').Router(); const bcrypt = require('bcrypt');
+const router = require('express').Router();
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const Customer = require('../models/customer');
@@ -29,7 +30,11 @@ router.post('/signup', async (req, res) => {
         await customer.save();
         res.status(201).json(customer);
     } catch (err) {
-        res.status(err.status || 400).send(err.message);
+        res.status(err.status || 500).json({
+            error: {
+                message: err.message || "Internal server error"
+            }
+        });
     }
 });
 
@@ -43,15 +48,17 @@ router.post('/login', verifyCustomerLogin, async (req, res) => {
             isAdmin: customer.isAdmin
         }, process.env.JWT_KEY, { expiresIn: '1h' }, (err, token) => {
             if (err) {
-                console.log(err);
                 throw err;
             }
 
             return res.status(200).set('Authorization', `Bearer ${token}`).json(customer);
         });
     } catch (err) {
-        console.log(err);
-        res.status(500).send("Internal server error");
+        res.status(err.status || 500).json({
+            error: {
+                message: err.message || "Internal server error"
+            }
+        });
     }
 
 });
